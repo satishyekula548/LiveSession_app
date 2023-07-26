@@ -54,12 +54,12 @@ class MeetPage extends Component {
 	}
 
 	handleParticipantJoined = async (participant) => {
-		console.log("handleParticipantJoined", participant); // { id: "2baa184e", displayName: "Shanu Verma", formattedDisplayName: "Shanu Verma" }
+		console.log("handleParticipantJoined", participant);
 		const data = await this.getParticipants();
 	}
 
 	handleVideoConferenceJoined = async (participant) => {
-		console.log("handleVideoConferenceJoined", participant); // { roomName: "bwb-bfqi-vmh", id: "8c35a951", displayName: "Akash Verma", formattedDisplayName: "Akash Verma (me)"}
+		console.log("handleVideoConferenceJoined", participant);
 		const data = await this.getParticipants();
 	}
 
@@ -113,7 +113,7 @@ class MeetPage extends Component {
 		return (
 			<>
 				<header className="nav-bar">
-					<p className="item-left heading">Jitsi React</p>
+					<p className="item-left heading">NeatSkills Live Session</p>
 				</header>
 				<div id="jitsi-iframe"></div>
 				<div class="item-center">
