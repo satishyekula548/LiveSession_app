@@ -1,113 +1,135 @@
-import React, { useEffect, useCallback, useContext } from "react";
-import { useHistory } from "react-router-dom";
-import { MeetContext } from "../context/MeetContext";
+import React, { Component } from 'react';
 
-const MeetPage = ({ match }) => {
-	//AS OF NOW DOMAIN WOULD BE JITSI'S AS WE ARE STILL USING THIER SERVERS
-	const domain = "172-232-77-224.ip.linodeusercontent.com";
-	let api = {};
+class MeetPage extends Component {
 
-	const history = useHistory();
+	domain = 'meet.jit.si';
+	api = {};
 
-	// THIS IS TO EXTRACT THE NAME WHICH WAS FILLED IN THE FIRST PAGE
-	const [name] = useContext(MeetContext);
+	constructor(props) {
+		super(props);
+		this.state = {
+			room: 'bwb-bfqi-vmg',
+			user: {
+				name: 'Ritik Raj'
+			},
+			isAudioMuted: false,
+			isVideoMuted: false
+		}
+	}
 
-	// INTIALISE THE MEET WITH THIS FUNCTION
-	const startMeet = useCallback(() => {
+	startMeet = () => {
 		const options = {
-			roomName: match.params.id,
-			width: "100%",
+			roomName: this.state.room,
+			width: '100%',
 			height: 500,
 			configOverwrite: { prejoinPageEnabled: false },
 			interfaceConfigOverwrite: {
-				// overwrite interface properties if you want
+				// overwrite interface properties
 			},
-			// VIDEO FRAME WILL BE ADDED HERE
-			parentNode: document.querySelector("#jitsi-iframe"),
+			parentNode: document.querySelector('#jitsi-iframe'),
 			userInfo: {
-				displayName: name,
-			},
-		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		api = new window.JitsiMeetExternalAPI(domain, options);
-
-		api.addEventListeners({
-			readyToClose: handleClose,
-			participantLeft: handleParticipantLeft,
-			participantJoined: handleParticipantJoined,
-			videoConferenceJoined: handleVideoConferenceJoined,
-			videoConferenceLeft: handleVideoConferenceLeft,
-		});
-	}, [api]);
-
-	useEffect(() => {
-		if (window.JitsiMeetExternalAPI) {
-			startMeet();
-		} else {
-			alert("JitsiMeetExternalAPI not loaded");
+				displayName: this.state.user.name
+			}
 		}
-	}, [startMeet]);
+		this.api = new window.JitsiMeetExternalAPI(this.domain, options);
 
-	// ALL OUR HANDLERS
-	const handleClose = () => {
+		this.api.addEventListeners({
+			readyToClose: this.handleClose,
+			participantLeft: this.handleParticipantLeft,
+			participantJoined: this.handleParticipantJoined,
+			videoConferenceJoined: this.handleVideoConferenceJoined,
+			videoConferenceLeft: this.handleVideoConferenceLeft,
+			audioMuteStatusChanged: this.handleMuteStatus,
+			videoMuteStatusChanged: this.handleVideoStatus
+		});
+	}
+
+	handleClose = () => {
 		console.log("handleClose");
-	};
+	}
 
-	const handleParticipantLeft = async (participant) => {
-		console.log("handleParticipantLeft", participant);
-		await getParticipants();
-	};
+	handleParticipantLeft = async (participant) => {
+		console.log("handleParticipantLeft", participant); // { id: "2baa184e" }
+		const data = await this.getParticipants();
+	}
 
-	const handleParticipantJoined = async (participant) => {
+	handleParticipantJoined = async (participant) => {
 		console.log("handleParticipantJoined", participant);
-		await getParticipants();
-	};
+		const data = await this.getParticipants();
+	}
 
-	const handleVideoConferenceJoined = async (participant) => {
+	handleVideoConferenceJoined = async (participant) => {
 		console.log("handleVideoConferenceJoined", participant);
-		await getParticipants();
-	};
+		const data = await this.getParticipants();
+	}
 
-	const handleVideoConferenceLeft = () => {
+	handleVideoConferenceLeft = () => {
 		console.log("handleVideoConferenceLeft");
-		history.push("/thank-you");
-	};
+		return this.props.history.push('/thank-you');
+	}
 
-	// GETTING ALL PARTICIPANTS
-	const getParticipants = () => {
+	handleMuteStatus = (audio) => {
+		console.log("handleMuteStatus", audio); // { muted: true }
+	}
+
+	handleVideoStatus = (video) => {
+		console.log("handleVideoStatus", video); // { muted: true }
+	}
+
+	getParticipants() {
 		return new Promise((resolve, reject) => {
 			setTimeout(() => {
-				resolve(api.getParticipantsInfo());
-			}, 500);
+				resolve(this.api.getParticipantsInfo()); // get all participants
+			}, 500)
 		});
-	};
+	}
 
-	return (
-		<React.Fragment>
-			<header
-				style={{
-					backgroundColor: "rgb(10, 25, 41)",
-					color: "white",
-					textAlign: "center",
-				}}>
-				<p style={{ margin: 0, padding: 10 }}>Session</p>
-			</header>
-			<div
-				id='jitsi-iframe'
-				style={{
-					width: "100%",
-					height: "100%",
-					marginBottom: 0,
-					marginTop: "10px",
-				}}></div>
-			<div
-				style={{
-					backgroundColor: "rgb(10, 25, 41)",
-					height: "10vh",
-					margin: 0,
-				}}></div>
-		</React.Fragment>
-	);
-};
+	// custom events
+	executeCommand(command) {
+		this.api.executeCommand(command);;
+		if (command == 'hangup') {
+			return this.props.history.push('/thank-you');
+		}
+
+		if (command == 'toggleAudio') {
+			this.setState({ isAudioMuted: !this.state.isAudioMuted });
+		}
+
+		if (command == 'toggleVideo') {
+			this.setState({ isVideoMuted: !this.state.isVideoMuted });
+		}
+	}
+
+	componentDidMount() {
+		if (window.JitsiMeetExternalAPI) {
+			this.startMeet();
+		} else {
+			alert('JitsiMeetExternalAPI not loaded');
+		}
+	}
+
+	render() {
+		const { isAudioMuted, isVideoMuted } = this.state;
+		return (
+			<>
+				<header className="nav-bar">
+					<p className="item-left heading">NeatSkills Live Session</p>
+				</header>
+				<div id="jitsi-iframe"></div>
+				<div class="item-center">
+					<span>Custom Controls</span>
+				</div>
+				<div class="item-center">
+					<span>&nbsp;&nbsp;</span>
+					<i onClick={() => this.executeCommand('toggleAudio')} className={`fas fa-2x grey-color ${isAudioMuted ? 'fa-microphone-slash' : 'fa-microphone'}`} aria-hidden="true" title="Mute / Unmute"></i>
+					<i onClick={() => this.executeCommand('hangup')} className="fas fa-phone-slash fa-2x red-color" aria-hidden="true" title="Leave"></i>
+					<i onClick={() => this.executeCommand('toggleVideo')} className={`fas fa-2x grey-color ${isVideoMuted ? 'fa-video-slash' : 'fa-video'}`} aria-hidden="true" title="Start / Stop camera"></i>
+					<i onClick={() => this.executeCommand('toggleShareScreen')} className="fas fa-film fa-2x grey-color" aria-hidden="true" title="Share your screen"></i>
+				</div>
+
+			</>
+		);
+	}
+}
 
 export default MeetPage;
