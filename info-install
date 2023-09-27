@@ -1,0 +1,12 @@
+create instance any type
+install git
+clone the url
+change directory to url
+install nodejs (https://nodejs.org/en/download)
+unzip the file
+sudo yum -y install java
+install nodejs(sudo yum install nodejs)
+npm install
+npm run dev
+before that cong the file (vite.congig)5173  (package-json config) add 'dev' --host)
+install httpd ,start the service and enable.
